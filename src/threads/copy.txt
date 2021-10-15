@@ -1,0 +1,25 @@
+Bochs BIOS - build: 05/03/18
+$Revision: 13498 $ $Date: 2018-05-03 19:54:31 +0200 (Thu, 03 May 2018) $
+Options: apmbios pcibios pnpbios eltorito rombios32
+
+ata0 master: Generic 1234 ATA-6 Hard-Disk (   0 MBytes)
+
+Press F12 for boot menu.
+
+Booting from Hard Disk...
+PiLo hda1
+Loading............
+Kernel command line: run my_test
+Pintos booting with 4,096 kB RAM...
+383 pages available in kernel pool.
+383 pages available in user pool.
+Calibrating timer...  102,400 loops/s.
+Boot complete.
+Hello! My code runs in Pintos!Executing 'my_test':
+Kernel PANIC at ../../tests/threads/tests.c:148 in run_test(): no test named "my
+_test"
+Call stack: 0xc002a490 0xc002cc45 0xc00207c6 0xc00208d7 0xc00203ae.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+ß

@@ -59,6 +59,9 @@ static unsigned thread_ticks;   /* # of timer ticks since last yield. */
    Controlled by kernel command-line option "-o mlfqs". */
 bool thread_mlfqs;
 
+
+int total_thread_no;
+
 static void kernel_thread (thread_func *, void *aux);
 
 static void idle (void *aux UNUSED);
@@ -184,10 +187,14 @@ thread_create (const char *name, int priority,
   init_thread (t, name, priority);
   tid = t->tid = allocate_tid ();
 
+  t->parent_tid = thread_current()->tid;
+
   /* Prepare thread for first run by initializing its stack.
      Do this atomically so intermediate values for the 'stack' 
      member cannot be observed. */
   old_level = intr_disable ();
+
+  total_thread_no++; //increment total number of threads
 
   /* Stack frame for kernel_thread(). */
   kf = alloc_frame (t, sizeof *kf);
@@ -245,6 +252,7 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
+  //trebe inserat in ordine in loc de push_back
   list_push_back (&ready_list, &t->elem);
   t->status = THREAD_READY;
   intr_set_level (old_level);
@@ -300,6 +308,7 @@ thread_exit (void)
   intr_disable ();
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
+  total_thread_no--;
   schedule ();
   NOT_REACHED ();
 }
@@ -572,11 +581,12 @@ schedule (void)
 static tid_t
 allocate_tid (void) 
 {
-  static tid_t next_tid = 1;
+  static tid_t next_tid = 2;
   tid_t tid;
 
   lock_acquire (&tid_lock);
-  tid = next_tid++;
+  tid = next_tid;
+  next_tid += 2;
   lock_release (&tid_lock);
 
   return tid;
