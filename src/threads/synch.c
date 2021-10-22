@@ -46,6 +46,18 @@ sema_init (struct semaphore *sema, unsigned value)
 {
   ASSERT (sema != NULL);
 
+  sema->name = "noname";
+  sema->value = value;
+  list_init (&sema->waiters);
+}
+
+/* Initialize a named semaphore*/
+void sema_init_name (struct semaphore *sema, unsigned value, const char *name){
+  ASSERT (sema != NULL);
+  
+  // strlcpy(sema->name, name, strlen(name));
+
+  sema->name = name;
   sema->value = value;
   list_init (&sema->waiters);
 }
@@ -65,6 +77,10 @@ sema_down (struct semaphore *sema)
   ASSERT (sema != NULL);
   ASSERT (!intr_context ());
 
+  if(strcmp(sema->name, "noname") != 0){
+    printf("DOWN semaphore's name: %s\n\tCaller thread: %s\n", sema->name, thread_current()->name);
+  
+  }
   old_level = intr_disable ();
   while (sema->value == 0) 
     {
@@ -112,7 +128,10 @@ sema_up (struct semaphore *sema)
 
   ASSERT (sema != NULL);
 
-  old_level = intr_disable ();
+  if(strcmp(sema->name, "noname") != 0){
+    printf("UP Semaphore's name: %s\n\tCaller thread: %s\n", sema->name, thread_current()->name);
+  
+  }old_level = intr_disable ();
   if (!list_empty (&sema->waiters)) 
     thread_unblock (list_entry (list_pop_front (&sema->waiters),
                                 struct thread, elem));
@@ -177,6 +196,17 @@ lock_init (struct lock *lock)
 {
   ASSERT (lock != NULL);
 
+  lock->name = "noname";
+  lock->holder = NULL;
+  sema_init (&lock->semaphore, 1);
+}
+
+void
+lock_init_name (struct lock *lock, char *name)
+{
+  ASSERT (lock != NULL);
+
+  lock->name = name;
   lock->holder = NULL;
   sema_init (&lock->semaphore, 1);
 }
@@ -196,7 +226,15 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
-  sema_down (&lock->semaphore);
+  // sema_down (&lock->semaphore);
+
+  while (lock->value == 0) 
+  {
+    list_push_back (&lock->waiters, &thread_current ()->elem);
+    thread_block ();
+  }
+  lock->value = 0;
+
   lock->holder = thread_current ();
 }
 
@@ -232,7 +270,11 @@ lock_release (struct lock *lock)
   ASSERT (lock_held_by_current_thread (lock));
 
   lock->holder = NULL;
-  sema_up (&lock->semaphore);
+  // sema_up (&lock->semaphore);
+  if (!list_empty (&lock->waiters)) 
+    thread_unblock (list_entry (list_pop_front (&lock->waiters),
+                                struct thread, elem));
+  lock->value = 1;
 }
 
 /* Returns true if the current thread holds LOCK, false
